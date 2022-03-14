@@ -24,38 +24,38 @@ use frame_support::{
 };
 use sp_runtime::{traits::Convert, FixedPointNumber, FixedPointOperand, FixedU128};
 
-pub(super) type DepositBalanceOf<T, I = ()> =
+pub type DepositBalanceOf<T, I = ()> =
 	<<T as Config<I>>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
-pub(super) type AssetAccountOf<T, I> =
+pub type AssetAccountOf<T, I> =
 	AssetAccount<<T as Config<I>>::Balance, DepositBalanceOf<T, I>, <T as Config<I>>::Extra>;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct AssetDetails<Balance, AccountId, DepositBalance> {
 	/// Can change `owner`, `issuer`, `freezer` and `admin` accounts.
-	pub(super) owner: AccountId,
+	pub owner: AccountId,
 	/// Can mint tokens.
-	pub(super) issuer: AccountId,
+	pub issuer: AccountId,
 	/// Can thaw tokens, force transfers and burn tokens from any account.
-	pub(super) admin: AccountId,
+	pub admin: AccountId,
 	/// Can freeze tokens.
-	pub(super) freezer: AccountId,
+	pub freezer: AccountId,
 	/// The total supply across all accounts.
-	pub(super) supply: Balance,
+	pub supply: Balance,
 	/// The balance deposited for this asset. This pays for the data stored here.
-	pub(super) deposit: DepositBalance,
+	pub deposit: DepositBalance,
 	/// The ED for virtual accounts.
-	pub(super) min_balance: Balance,
+	pub min_balance: Balance,
 	/// If `true`, then any account with this asset is given a provider reference. Otherwise, it
 	/// requires a consumer reference.
-	pub(super) is_sufficient: bool,
+	pub is_sufficient: bool,
 	/// The total number of accounts.
-	pub(super) accounts: u32,
+	pub accounts: u32,
 	/// The total number of accounts for which we have placed a self-sufficient reference.
-	pub(super) sufficients: u32,
+	pub sufficients: u32,
 	/// The total number of approvals.
-	pub(super) approvals: u32,
+	pub approvals: u32,
 	/// Whether the asset is frozen for non-admin transfers.
-	pub(super) is_frozen: bool,
+	pub is_frozen: bool,
 }
 
 impl<Balance, AccountId, DepositBalance> AssetDetails<Balance, AccountId, DepositBalance> {
@@ -73,9 +73,9 @@ impl<Balance, AccountId, DepositBalance> AssetDetails<Balance, AccountId, Deposi
 pub struct Approval<Balance, DepositBalance> {
 	/// The amount of funds approved for the balance transfer from the owner to some delegated
 	/// target.
-	pub(super) amount: Balance,
+	pub amount: Balance,
 	/// The amount reserved on the owner's account to hold this item in storage.
-	pub(super) deposit: DepositBalance,
+	pub deposit: DepositBalance,
 }
 
 #[test]
@@ -114,13 +114,13 @@ impl<Balance> ExistenceReason<Balance> {
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct AssetAccount<Balance, DepositBalance, Extra> {
 	/// The balance.
-	pub(super) balance: Balance,
+	pub balance: Balance,
 	/// Whether the account is frozen.
-	pub(super) is_frozen: bool,
+	pub is_frozen: bool,
 	/// The reason for the existence of the account.
-	pub(super) reason: ExistenceReason<DepositBalance>,
+	pub reason: ExistenceReason<DepositBalance>,
 	/// Additional "sidecar" data, in case some other pallet wants to use this storage item.
-	pub(super) extra: Extra,
+	pub extra: Extra,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Default, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -128,15 +128,15 @@ pub struct AssetMetadata<DepositBalance, BoundedString> {
 	/// The balance deposited for this metadata.
 	///
 	/// This pays for the data stored in this struct.
-	pub(super) deposit: DepositBalance,
+	pub deposit: DepositBalance,
 	/// The user friendly name of this asset. Limited in length by `StringLimit`.
-	pub(super) name: BoundedString,
+	pub name: BoundedString,
 	/// The ticker symbol for this asset. Limited in length by `StringLimit`.
-	pub(super) symbol: BoundedString,
+	pub symbol: BoundedString,
 	/// The number of decimals this asset uses to represent one unit.
-	pub(super) decimals: u8,
+	pub decimals: u8,
 	/// Whether the asset metadata may be changed by a non Force origin.
-	pub(super) is_frozen: bool,
+	pub is_frozen: bool,
 }
 
 /// Witness data for the destroy transactions.
@@ -144,13 +144,13 @@ pub struct AssetMetadata<DepositBalance, BoundedString> {
 pub struct DestroyWitness {
 	/// The number of accounts holding the asset.
 	#[codec(compact)]
-	pub(super) accounts: u32,
+	pub accounts: u32,
 	/// The number of accounts holding the asset with a self-sufficient reference.
 	#[codec(compact)]
-	pub(super) sufficients: u32,
+	pub sufficients: u32,
 	/// The number of transfer-approvals of the asset.
 	#[codec(compact)]
-	pub(super) approvals: u32,
+	pub approvals: u32,
 }
 
 /// Trait for allowing a minimum balance on the account to be specified, beyond the
@@ -186,28 +186,28 @@ impl<AssetId, AccountId, Balance> FrozenBalance<AssetId, AccountId, Balance> for
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub(super) struct TransferFlags {
+pub struct TransferFlags {
 	/// The debited account must stay alive at the end of the operation; an error is returned if
 	/// this cannot be achieved legally.
-	pub(super) keep_alive: bool,
+	pub keep_alive: bool,
 	/// Less than the amount specified needs be debited by the operation for it to be considered
 	/// successful. If `false`, then the amount debited will always be at least the amount
 	/// specified.
-	pub(super) best_effort: bool,
+	pub best_effort: bool,
 	/// Any additional funds debited (due to minimum balance requirements) should be burned rather
 	/// than credited to the destination account.
-	pub(super) burn_dust: bool,
+	pub burn_dust: bool,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub(super) struct DebitFlags {
+pub struct DebitFlags {
 	/// The debited account must stay alive at the end of the operation; an error is returned if
 	/// this cannot be achieved legally.
-	pub(super) keep_alive: bool,
+	pub keep_alive: bool,
 	/// Less than the amount specified needs be debited by the operation for it to be considered
 	/// successful. If `false`, then the amount debited will always be at least the amount
 	/// specified.
-	pub(super) best_effort: bool,
+	pub best_effort: bool,
 }
 
 impl From<TransferFlags> for DebitFlags {
