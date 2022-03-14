@@ -21,7 +21,7 @@ use super::*;
 use frame_support::{traits::Get, BoundedVec};
 
 #[must_use]
-pub(super) enum DeadConsequence {
+pub enum DeadConsequence {
 	Remove,
 	Keep,
 }
@@ -63,7 +63,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Asset::<T, I>::get(id).map(|x| x.supply)
 	}
 
-	pub(super) fn new_account(
+	pub fn new_account(
 		who: &T::AccountId,
 		d: &mut AssetDetails<T::Balance, T::AccountId, DepositBalanceOf<T, I>>,
 		maybe_deposit: Option<DepositBalanceOf<T, I>>,
@@ -83,7 +83,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(reason)
 	}
 
-	pub(super) fn dead_account(
+	pub fn dead_account(
 		who: &T::AccountId,
 		d: &mut AssetDetails<T::Balance, T::AccountId, DepositBalanceOf<T, I>>,
 		reason: &ExistenceReason<DepositBalanceOf<T, I>>,
@@ -103,7 +103,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Remove
 	}
 
-	pub(super) fn can_increase(
+	pub fn can_increase(
 		id: T::AssetId,
 		who: &T::AccountId,
 		amount: T::Balance,
@@ -135,7 +135,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	}
 
 	/// Return the consequence of a withdraw.
-	pub(super) fn can_decrease(
+	pub fn can_decrease(
 		id: T::AssetId,
 		who: &T::AccountId,
 		amount: T::Balance,
@@ -191,7 +191,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 
 	// Maximum `amount` that can be passed into `can_withdraw` to result in a `WithdrawConsequence`
 	// of `Success`.
-	pub(super) fn reducible_balance(
+	pub fn reducible_balance(
 		id: T::AssetId,
 		who: &T::AccountId,
 		keep_alive: bool,
@@ -236,7 +236,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// be passed into the `melted` function of the `T::Freezer` if `Some`.
 	///
 	/// If no valid debit can be made then return an `Err`.
-	pub(super) fn prep_debit(
+	pub fn prep_debit(
 		id: T::AssetId,
 		target: &T::AccountId,
 		amount: T::Balance,
@@ -272,7 +272,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// `amount`.
 	///
 	/// If no valid credit can be made then return an `Err`.
-	pub(super) fn prep_credit(
+	pub fn prep_credit(
 		id: T::AssetId,
 		dest: &T::AccountId,
 		amount: T::Balance,
@@ -288,7 +288,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	}
 
 	/// Creates a account for `who` to hold asset `id` with a zero balance and takes a deposit.
-	pub(super) fn do_touch(id: T::AssetId, who: T::AccountId) -> DispatchResult {
+	pub fn do_touch(id: T::AssetId, who: T::AccountId) -> DispatchResult {
 		ensure!(!Account::<T, I>::contains_key(id, &who), Error::<T, I>::AlreadyExists);
 		let deposit = T::AssetAccountDeposit::get();
 		let mut details = Asset::<T, I>::get(&id).ok_or(Error::<T, I>::Unknown)?;
@@ -309,7 +309,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	}
 
 	/// Returns a deposit, destroying an asset-account.
-	pub(super) fn do_refund(id: T::AssetId, who: T::AccountId, allow_burn: bool) -> DispatchResult {
+	pub fn do_refund(id: T::AssetId, who: T::AccountId, allow_burn: bool) -> DispatchResult {
 		let mut account = Account::<T, I>::get(id, &who).ok_or(Error::<T, I>::NoDeposit)?;
 		let deposit = account.reason.take_deposit().ok_or(Error::<T, I>::NoDeposit)?;
 		let mut details = Asset::<T, I>::get(&id).ok_or(Error::<T, I>::Unknown)?;
@@ -336,7 +336,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// This alters the registered supply of the asset and emits an event.
 	///
 	/// Will return an error or will increase the amount by exactly `amount`.
-	pub(super) fn do_mint(
+	pub fn do_mint(
 		id: T::AssetId,
 		beneficiary: &T::AccountId,
 		amount: T::Balance,
@@ -367,7 +367,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// that. This is not intended to be used alone.
 	///
 	/// Will return an error or will increase the amount by exactly `amount`.
-	pub(super) fn increase_balance(
+	pub fn increase_balance(
 		id: T::AssetId,
 		beneficiary: &T::AccountId,
 		amount: T::Balance,
@@ -415,7 +415,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	///
 	/// Will return an error and do nothing or will decrease the amount and return the amount
 	/// reduced by.
-	pub(super) fn do_burn(
+	pub fn do_burn(
 		id: T::AssetId,
 		target: &T::AccountId,
 		amount: T::Balance,
@@ -445,7 +445,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	///
 	/// Will return an error and do nothing or will decrease the amount and return the amount
 	/// reduced by.
-	pub(super) fn decrease_balance(
+	pub fn decrease_balance(
 		id: T::AssetId,
 		target: &T::AccountId,
 		amount: T::Balance,
@@ -503,7 +503,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	///
 	/// Will fail if the amount transferred is so small that it cannot create the destination due
 	/// to minimum balance requirements.
-	pub(super) fn do_transfer(
+	pub fn do_transfer(
 		id: T::AssetId,
 		source: &T::AccountId,
 		dest: &T::AccountId,
@@ -627,7 +627,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	///   this asset.
 	/// * `min_balance`: The minimum balance a user is allowed to have of this asset before they are
 	///   considered dust and cleaned up.
-	pub(super) fn do_force_create(
+	pub fn do_force_create(
 		id: T::AssetId,
 		owner: T::AccountId,
 		is_sufficient: bool,
@@ -664,7 +664,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	///   complexity of the operation.
 	/// * `maybe_check_owner`: An optional check before destroying the asset, if the provided
 	///   account is the owner of that asset. Can be used for authorization checks.
-	pub(super) fn do_destroy(
+	pub fn do_destroy(
 		id: T::AssetId,
 		witness: DestroyWitness,
 		maybe_check_owner: Option<T::AccountId>,
@@ -722,7 +722,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// while reserving `T::ApprovalDeposit` from owner
 	///
 	/// If an approval already exists, the new amount is added to such existing approval
-	pub(super) fn do_approve_transfer(
+	pub fn do_approve_transfer(
 		id: T::AssetId,
 		owner: &T::AccountId,
 		delegate: &T::AccountId,
@@ -770,7 +770,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	/// Will fail if `amount` is greater than the approval from `owner` to 'delegate'
 	/// Will unreserve the deposit from `owner` if the entire approved `amount` is spent by
 	/// 'delegate'
-	pub(super) fn do_transfer_approved(
+	pub fn do_transfer_approved(
 		id: T::AssetId,
 		owner: &T::AccountId,
 		delegate: &T::AccountId,
@@ -812,7 +812,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 	}
 
 	/// Do set metadata
-	pub(super) fn do_set_metadata(
+	pub fn do_set_metadata(
 		id: T::AssetId,
 		from: &T::AccountId,
 		name: Vec<u8>,
