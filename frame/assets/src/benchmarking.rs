@@ -52,6 +52,7 @@ fn create_default_asset<T: Config<I>, I: 'static>(
 		caller_lookup.clone(),
 		is_sufficient,
 		1u32.into(),
+		true
 	)
 	.is_ok());
 	(asset_id, caller, caller_lookup)
