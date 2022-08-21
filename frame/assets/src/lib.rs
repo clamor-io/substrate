@@ -358,8 +358,8 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config<I>, I: 'static = ()> {
-		/// Genesis assets: id, owner, is_sufficient, min_balance
-		pub assets: Vec<(T::AssetId, T::AccountId, bool, T::Balance)>,
+		/// Genesis assets: id, owner, is_sufficient, min_balance, transferable
+		pub assets: Vec<(T::AssetId, T::AccountId, bool, T::Balance, bool)>,
 		/// Genesis metadata: id, name, symbol, decimals
 		pub metadata: Vec<(T::AssetId, Vec<u8>, Vec<u8>, u8)>,
 		/// Genesis accounts: id, account_id, balance
@@ -380,7 +380,7 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config<I>, I: 'static> GenesisBuild<T, I> for GenesisConfig<T, I> {
 		fn build(&self) {
-			for (id, owner, is_sufficient, min_balance) in &self.assets {
+			for (id, owner, is_sufficient, min_balance, transferable) in &self.assets {
 				assert!(!Asset::<T, I>::contains_key(id), "Asset id already in use");
 				assert!(!min_balance.is_zero(), "Min balance should not be zero");
 				Asset::<T, I>::insert(
@@ -398,6 +398,7 @@ pub mod pallet {
 						sufficients: 0,
 						approvals: 0,
 						status: AssetStatus::Live,
+						is_transferable: *transferable,
 					},
 				);
 			}
@@ -561,6 +562,8 @@ pub mod pallet {
 		IncorrectStatus,
 		/// The asset should be frozen before the given operation.
 		NotFrozen,
+		/// Cannot transfer an asset that is not transferable.
+		CannotTransfer,
 	}
 
 	#[pallet::call]
@@ -591,6 +594,7 @@ pub mod pallet {
 			id: T::AssetIdParameter,
 			admin: AccountIdLookupOf<T>,
 			min_balance: T::Balance,
+			transferable: bool,
 		) -> DispatchResult {
 			let id: T::AssetId = id.into();
 			let owner = T::CreateOrigin::ensure_origin(origin, &id)?;
@@ -617,6 +621,7 @@ pub mod pallet {
 					sufficients: 0,
 					approvals: 0,
 					status: AssetStatus::Live,
+					is_transferable: transferable,
 				},
 			);
 
@@ -657,11 +662,12 @@ pub mod pallet {
 			owner: AccountIdLookupOf<T>,
 			is_sufficient: bool,
 			#[pallet::compact] min_balance: T::Balance,
+			transferable: bool,
 		) -> DispatchResult {
 			T::ForceOrigin::ensure_origin(origin)?;
 			let owner = T::Lookup::lookup(owner)?;
 			let id: T::AssetId = id.into();
-			Self::do_force_create(id, owner, is_sufficient, min_balance)
+			Self::do_force_create(id, owner, is_sufficient, min_balance, transferable)
 		}
 
 		/// Start the process of destroying a fungible asset class.
@@ -841,6 +847,9 @@ pub mod pallet {
 			let dest = T::Lookup::lookup(target)?;
 			let id: T::AssetId = id.into();
 
+			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
+			ensure!(info.is_transferable, Error::<T, I>::CannotTransfer);
+
 			let f = TransferFlags { keep_alive: false, best_effort: false, burn_dust: false };
 			Self::do_transfer(id, &origin, &dest, amount, None, f).map(|_| ())
 		}
@@ -874,6 +883,9 @@ pub mod pallet {
 			let source = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(target)?;
 			let id: T::AssetId = id.into();
+
+			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
+			ensure!(info.is_transferable, Error::<T, I>::CannotTransfer);
 
 			let f = TransferFlags { keep_alive: true, best_effort: false, burn_dust: false };
 			Self::do_transfer(id, &source, &dest, amount, None, f).map(|_| ())
@@ -1070,7 +1082,7 @@ pub mod pallet {
 				ensure!(details.status == AssetStatus::Live, Error::<T, I>::LiveAsset);
 				ensure!(origin == details.owner, Error::<T, I>::NoPermission);
 				if details.owner == owner {
-					return Ok(())
+					return Ok(());
 				}
 
 				let metadata_deposit = Metadata::<T, I>::get(id).deposit;

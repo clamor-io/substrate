@@ -69,6 +69,8 @@ pub struct AssetDetails<Balance, AccountId, DepositBalance> {
 	pub(super) approvals: u32,
 	/// The status of the asset
 	pub(super) status: AssetStatus,
+	/// Whether the asset is transferable or not
+	pub(super) is_transferable: bool,
 }
 
 /// Data concerning an approval.
