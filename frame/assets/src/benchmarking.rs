@@ -140,7 +140,7 @@ benchmarks_instance_pallet! {
 		let caller = T::CreateOrigin::ensure_origin(origin, &asset_id.into()).unwrap();
 		let caller_lookup = T::Lookup::unlookup(caller.clone());
 		T::Currency::make_free_balance_be(&caller, DepositBalanceOf::<T, I>::max_value());
-	}: _(SystemOrigin::Signed(caller.clone()), asset_id, caller_lookup, 1u32.into())
+	}: _(SystemOrigin::Signed(caller.clone()), asset_id, caller_lookup, 1u32.into(), true)
 	verify {
 		assert_last_event::<T, I>(Event::Created { asset_id: asset_id.into(), creator: caller.clone(), owner: caller }.into());
 	}
@@ -155,7 +155,7 @@ benchmarks_instance_pallet! {
 	}
 
 	start_destroy {
-		let (asset_id, caller, caller_lookup) = create_default_minted_asset::<T, I>(true, 100u32.into());
+		let (asset_id, caller, caller_lookup) = create_default_minted_asset::<T, I>(true, 100u32.into(), true);
 		Assets::<T, I>::freeze_asset(
 			SystemOrigin::Signed(caller.clone()).into(),
 			asset_id,
