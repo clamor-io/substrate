@@ -239,6 +239,8 @@ pub mod pallet {
 
 		/// The id type for named reserves.
 		type ReserveIdentifier: Parameter + Member + MaxEncodedLen + Ord + Copy;
+
+		type Transferable: bool;
 	}
 
 	#[pallet::pallet]
@@ -1472,14 +1474,15 @@ where
 	}
 
 	// Transfer some free balance from `transactor` to `dest`, respecting existence requirements.
-	// Is a no-op if value to be transferred is zero or the `transactor` is the same as `dest`.
+	// Is a no-op if value to be transferred is zero or the `transactor` is the same as `dest` or the 
+	// transferability set in config is forbidden.
 	fn transfer(
 		transactor: &T::AccountId,
 		dest: &T::AccountId,
 		value: Self::Balance,
 		existence_requirement: ExistenceRequirement,
 	) -> DispatchResult {
-		if value.is_zero() || transactor == dest {
+		if value.is_zero() || transactor == dest || T::Transferable == false {
 			return Ok(())
 		}
 
