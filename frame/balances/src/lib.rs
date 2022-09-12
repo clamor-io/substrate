@@ -240,7 +240,7 @@ pub mod pallet {
 		/// The id type for named reserves.
 		type ReserveIdentifier: Parameter + Member + MaxEncodedLen + Ord + Copy;
 
-		type Transferable: bool;
+		type IsTransferable: bool;
 	}
 
 	#[pallet::pallet]
@@ -487,6 +487,8 @@ pub mod pallet {
 		DeadAccount,
 		/// Number of named reserves exceed MaxReserves
 		TooManyReserves,
+		/// Whether transfer function is allowed or not
+		CannotTransfer,
 	}
 
 	/// The total units issued in the system.
@@ -1482,7 +1484,9 @@ where
 		value: Self::Balance,
 		existence_requirement: ExistenceRequirement,
 	) -> DispatchResult {
-		if value.is_zero() || transactor == dest || T::Transferable == false {
+		ensure!(T::IsTransferable, Error::<T, I>::CannotTransfer);
+
+		if value.is_zero() || transactor == dest {
 			return Ok(())
 		}
 
