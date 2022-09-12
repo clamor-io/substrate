@@ -246,6 +246,8 @@ pub mod pallet {
 
 		/// The id type for named reserves.
 		type ReserveIdentifier: Parameter + Member + MaxEncodedLen + Ord + Copy;
+
+		type IsTransferable: Get<bool>;
 	}
 
 	/// The current storage version.
@@ -503,6 +505,8 @@ pub mod pallet {
 		DeadAccount,
 		/// Number of named reserves exceed MaxReserves
 		TooManyReserves,
+		/// Whether transfer function is allowed or not
+		CannotTransfer,
 	}
 
 	/// The total units issued in the system.
@@ -1503,13 +1507,16 @@ where
 	}
 
 	// Transfer some free balance from `transactor` to `dest`, respecting existence requirements.
-	// Is a no-op if value to be transferred is zero or the `transactor` is the same as `dest`.
+	// Is a no-op if value to be transferred is zero or the `transactor` is the same as `dest` or the 
+	// transferability set in config is forbidden.
 	fn transfer(
 		transactor: &T::AccountId,
 		dest: &T::AccountId,
 		value: Self::Balance,
 		existence_requirement: ExistenceRequirement,
 	) -> DispatchResult {
+		ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransfer);
+
 		if value.is_zero() || transactor == dest {
 			return Ok(())
 		}
