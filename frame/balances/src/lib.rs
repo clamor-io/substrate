@@ -240,7 +240,7 @@ pub mod pallet {
 		/// The id type for named reserves.
 		type ReserveIdentifier: Parameter + Member + MaxEncodedLen + Ord + Copy;
 
-		type IsTransferable: bool;
+		type IsTransferable: Get<bool>;
 	}
 
 	#[pallet::pallet]
@@ -1484,7 +1484,7 @@ where
 		value: Self::Balance,
 		existence_requirement: ExistenceRequirement,
 	) -> DispatchResult {
-		ensure!(T::IsTransferable, Error::<T, I>::CannotTransfer);
+		ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransfer);
 
 		if value.is_zero() || transactor == dest {
 			return Ok(())
