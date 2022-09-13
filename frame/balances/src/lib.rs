@@ -1550,62 +1550,7 @@ where
 		existence_requirement: ExistenceRequirement,
 	) -> DispatchResult {
 		ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransfer);
-
-		if value.is_zero() || transactor == dest {
-			return Ok(())
-		}
-
-		Self::try_mutate_account_with_dust(
-			dest,
-			|to_account, _| -> Result<DustCleaner<T, I>, DispatchError> {
-				Self::try_mutate_account_with_dust(
-					transactor,
-					|from_account, _| -> DispatchResult {
-						from_account.free = from_account
-							.free
-							.checked_sub(&value)
-							.ok_or(Error::<T, I>::InsufficientBalance)?;
-
-						// NOTE: total stake being stored in the same type means that this could
-						// never overflow but better to be safe than sorry.
-						to_account.free =
-							to_account.free.checked_add(&value).ok_or(ArithmeticError::Overflow)?;
-
-						let ed = T::ExistentialDeposit::get();
-						ensure!(to_account.total() >= ed, Error::<T, I>::ExistentialDeposit);
-
-						Self::ensure_can_withdraw(
-							transactor,
-							value,
-							WithdrawReasons::TRANSFER,
-							from_account.free,
-						)
-						.map_err(|_| Error::<T, I>::LiquidityRestrictions)?;
-
-						// TODO: This is over-conservative. There may now be other providers, and
-						// this pallet may not even be a provider.
-						let allow_death = existence_requirement == ExistenceRequirement::AllowDeath;
-						let allow_death =
-							allow_death && system::Pallet::<T>::can_dec_provider(transactor);
-						ensure!(
-							allow_death || from_account.total() >= ed,
-							Error::<T, I>::KeepAlive
-						);
-
-						Ok(())
-					},
-				)
-				.map(|(_, maybe_dust_cleaner)| maybe_dust_cleaner)
-			},
-		)?;
-
-		// Emit transfer event.
-		Self::deposit_event(Event::Transfer {
-			from: transactor.clone(),
-			to: dest.clone(),
-			amount: value,
-		});
-
+		Self::do_transfer(transactor, dest, value, existence_requirement)?;
 		Ok(())
 	}
 
