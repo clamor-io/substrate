@@ -1550,7 +1550,7 @@ where
 		existence_requirement: ExistenceRequirement,
 	) -> DispatchResult {
 		ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransfer);
-		Self::do_transfer(transactor, dest, value, existence_requirement)?;
+		let _ = Self::do_transfer(transactor, dest, value, existence_requirement);
 		Ok(())
 	}
 
