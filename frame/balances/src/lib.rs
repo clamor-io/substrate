@@ -1057,7 +1057,7 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		Ok(actual)
 	}
 
-	fn do_transfer(
+	pub fn do_transfer(
 		transactor: &T::AccountId,
 		dest: &T::AccountId,
 		value: T::Balance,
@@ -1541,7 +1541,7 @@ where
 	}
 
 	// Transfer some free balance from `transactor` to `dest`, respecting existence requirements.
-	// Is a no-op if value to be transferred is zero or the `transactor` is the same as `dest` or the 
+	// Is a no-op if value to be transferred is zero or the `transactor` is the same as `dest` or the
 	// transferability set in config is forbidden.
 	fn transfer(
 		transactor: &T::AccountId,
@@ -1550,8 +1550,7 @@ where
 		existence_requirement: ExistenceRequirement,
 	) -> DispatchResult {
 		ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransfer);
-		let _ = Self::do_transfer(transactor, dest, value, existence_requirement);
-		Ok(())
+		Self::do_transfer(transactor, dest, value, existence_requirement)
 	}
 
 	/// Slash a target account `who`, returning the negative imbalance created and any left over
