@@ -1204,6 +1204,7 @@ impl<T: Config<I>, I: 'static> fungible::Transfer<T::AccountId> for Pallet<T, I>
 		amount: T::Balance,
 		keep_alive: bool,
 	) -> Result<T::Balance, DispatchError> {
+		ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransfer);
 		let existence_requirement = if keep_alive { KeepAlive } else { AllowDeath };
 		Self::do_transfer(source, dest, amount, existence_requirement).map(|_| amount)
 	}
