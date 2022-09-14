@@ -1550,8 +1550,7 @@ where
 		existence_requirement: ExistenceRequirement,
 	) -> DispatchResult {
 		ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransfer);
-		let _ = Self::do_transfer(transactor, dest, value, existence_requirement);
-		Ok(())
+		Self::do_transfer(transactor, dest, value, existence_requirement)
 	}
 
 	/// Slash a target account `who`, returning the negative imbalance created and any left over
