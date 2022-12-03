@@ -271,7 +271,7 @@ impl NetworkConfiguration {
 			allow_non_globals_in_dht: false,
 			kademlia_disjoint_query_paths: false,
 			yamux_window_size: None,
-			ipfs_server: false,
+			ipfs_server: true,
 		}
 	}
 
