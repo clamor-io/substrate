@@ -231,10 +231,15 @@ impl<B: BlockT> BitswapRequestHandler<B> {
 							mh_type: cid.hash().code(),
 							mh_len: cid.hash().size(),
 						};
+
+						trace!(target: LOG_TARGET, "Sending block CID {:?}, hash {:?}", cid, hash);
+
 						response
 							.payload
 							.push(MessageBlock { prefix: prefix.to_bytes(), data: transaction });
 					} else {
+						trace!(target: LOG_TARGET, "Sending block presence CID {:?}, hash {:?}", cid, hash);
+
 						response.block_presences.push(BlockPresence {
 							r#type: BlockPresenceType::Have as i32,
 							cid: cid.to_bytes(),
