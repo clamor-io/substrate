@@ -224,27 +224,18 @@ impl<B: BlockT> BitswapRequestHandler<B> {
 				Some(transaction) => {
 					trace!(target: LOG_TARGET, "Found CID {:?}, hash {:?}", cid, hash);
 
-					if entry.want_type == WantType::Block as i32 {
-						let prefix = Prefix {
-							version: cid.version(),
-							codec: cid.codec(),
-							mh_type: cid.hash().code(),
-							mh_len: cid.hash().size(),
-						};
+					let prefix = Prefix {
+						version: cid.version(),
+						codec: cid.codec(),
+						mh_type: cid.hash().code(),
+						mh_len: cid.hash().size(),
+					};
 
-						trace!(target: LOG_TARGET, "Sending block CID {:?}, hash {:?}", cid, hash);
+					trace!(target: LOG_TARGET, "Sending block CID {:?}, hash {:?}", cid, hash);
 
-						response
-							.payload
-							.push(MessageBlock { prefix: prefix.to_bytes(), data: transaction });
-					} else {
-						trace!(target: LOG_TARGET, "Sending block presence CID {:?}, hash {:?}", cid, hash);
-
-						response.block_presences.push(BlockPresence {
-							r#type: BlockPresenceType::Have as i32,
-							cid: cid.to_bytes(),
-						});
-					}
+					response
+						.payload
+						.push(MessageBlock { prefix: prefix.to_bytes(), data: transaction });
 				},
 				None => {
 					trace!(target: LOG_TARGET, "Missing CID {:?}, hash {:?}", cid, hash);
