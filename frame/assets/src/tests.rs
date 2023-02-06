@@ -978,28 +978,31 @@ fn transfer_large_asset() {
 	})
 }
 
+/// This unit test function was added by Fragnova
 #[test]
 fn untransferable_asset_test() {
 	new_test_ext().execute_with(|| {
 		let amount = u64::pow(2, 63) + 2;
 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, true, 1, false));
 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, amount));
-		let e = Error::<Test>::CannotTransfer;
+		let e = Error::<Test>::CannotTransferThisFragnovaAsset;
 		assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, amount - 1), e);
 	})
 }
 
+/// This unit test function was added by Fragnova
 #[test]
 fn untransferable_asset_test_keepalive() {
 	new_test_ext().execute_with(|| {
 		let amount = u64::pow(2, 63) + 2;
 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, true, 1, false));
 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, amount));
-		let e = Error::<Test>::CannotTransfer;
+		let e = Error::<Test>::CannotTransferThisFragnovaAsset;
 		assert_noop!(Assets::transfer_keep_alive(Origin::signed(1), 0, 2, amount - 1), e);
 	})
 }
 
+/// This unit test function was added by Fragnova
 #[test]
 fn untransferable_asset_test_admin() {
 	new_test_ext().execute_with(|| {

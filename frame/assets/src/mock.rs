@@ -82,6 +82,7 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	type IsTransferable = frame_support::traits::ConstBool<true>; // This line was added by Fragnova
 }
 
 impl Config for Test {

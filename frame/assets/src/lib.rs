@@ -291,6 +291,8 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config<I>, I: 'static = ()> {
 		/// Genesis assets: id, owner, is_sufficient, min_balance, transferable
+		///
+		/// Note: The last tuple element (`transferable`) has been added by Fragnova
 		pub assets: Vec<(T::AssetId, T::AccountId, bool, T::Balance, bool)>,
 		/// Genesis metadata: id, name, symbol, decimals
 		pub metadata: Vec<(T::AssetId, Vec<u8>, Vec<u8>, u8)>,
@@ -330,7 +332,7 @@ pub mod pallet {
 						sufficients: 0,
 						approvals: 0,
 						is_frozen: false,
-						is_transferable: *transferable,
+						is_transferable: *transferable, // This line has been added by Fragnova
 					},
 				);
 			}
@@ -476,7 +478,9 @@ pub mod pallet {
 		/// The operation would result in funds being burned.
 		WouldBurn,
 		/// Cannot transfer an asset that is not transferable.
-		CannotTransfer,
+		///
+		/// Note: This error has been added by Fragnova
+		CannotTransferThisFragnovaAsset,
 	}
 
 	#[pallet::call]
@@ -496,8 +500,8 @@ pub mod pallet {
 		/// member of the asset class's admin team.
 		/// - `min_balance`: The minimum balance of this new asset that any single account must
 		/// have. If an account's balance is reduced below this, then it collapses to zero.
-		/// - `transferable`: Whether the new asset is transferable or not.
-		/// 
+		/// - `transferable`: Whether the new asset is transferable or not. Note: This parameter has been added by Fragnova.
+		///
 		/// Emits `Created` event when successful.
 		///
 		/// Weight: `O(1)`
@@ -507,7 +511,7 @@ pub mod pallet {
 			#[pallet::compact] id: T::AssetId,
 			admin: <T::Lookup as StaticLookup>::Source,
 			min_balance: T::Balance,
-			transferable: bool,
+			transferable: bool, // Note: This parameter has been added by Fragnova
 		) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
 			let admin = T::Lookup::lookup(admin)?;
@@ -533,7 +537,7 @@ pub mod pallet {
 					sufficients: 0,
 					approvals: 0,
 					is_frozen: false,
-					is_transferable: transferable,
+					is_transferable: transferable, // This line has been added by Fragnova
 				},
 			);
 			Self::deposit_event(Event::Created { asset_id: id, creator: owner, owner: admin });
@@ -555,8 +559,8 @@ pub mod pallet {
 		/// `transfer_ownership` and `set_team`.
 		/// - `min_balance`: The minimum balance of this new asset that any single account must
 		/// have. If an account's balance is reduced below this, then it collapses to zero.
-		///- `transferable`: Whether the asset is transferable or not.
-		/// 
+		/// - `transferable`: Whether the asset is transferable or not. Note: This parameter has been added by Fragnova.
+		///
 		/// Emits `ForceCreated` event when successful.
 		///
 		/// Weight: `O(1)`
@@ -567,7 +571,7 @@ pub mod pallet {
 			owner: <T::Lookup as StaticLookup>::Source,
 			is_sufficient: bool,
 			#[pallet::compact] min_balance: T::Balance,
-			transferable: bool,
+			transferable: bool, // Note: This parameter has been added by Fragnova.
 		) -> DispatchResult {
 			T::ForceOrigin::ensure_origin(origin)?;
 			let owner = T::Lookup::lookup(owner)?;
@@ -698,8 +702,9 @@ pub mod pallet {
 			let origin = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(target)?;
 
+			// These 2 lines have been added by Fragnova
 			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-			ensure!(info.is_transferable, Error::<T, I>::CannotTransfer);
+			ensure!(info.is_transferable, Error::<T, I>::CannotTransferThisFragnovaAsset);
 
 			let f = TransferFlags { keep_alive: false, best_effort: false, burn_dust: false };
 			Self::do_transfer(id, &origin, &dest, amount, None, f).map(|_| ())
@@ -733,8 +738,9 @@ pub mod pallet {
 			let source = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(target)?;
 
+			// These 2 lines have been added by Fragnova
 			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-			ensure!(info.is_transferable, Error::<T, I>::CannotTransfer);
+			ensure!(info.is_transferable, Error::<T, I>::CannotTransferThisFragnovaAsset);
 
 			let f = TransferFlags { keep_alive: true, best_effort: false, burn_dust: false };
 			Self::do_transfer(id, &source, &dest, amount, None, f).map(|_| ())

@@ -240,6 +240,10 @@ pub mod pallet {
 		/// The id type for named reserves.
 		type ReserveIdentifier: Parameter + Member + MaxEncodedLen + Ord + Copy;
 
+		/// Whether an account can voluntarily transfer any of its balance to another account
+		///
+		/// Note: This type has been added by Fragnova
+		#[pallet::constant]
 		type IsTransferable: Get<bool>;
 	}
 
@@ -280,6 +284,8 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] value: T::Balance,
 		) -> DispatchResultWithPostInfo {
+			ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransferNOVA); // This line has been added by Fragnova
+
 			let transactor = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Currency<_>>::transfer(
@@ -359,6 +365,9 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] value: T::Balance,
 		) -> DispatchResultWithPostInfo {
+			// TODO Review - Do we want to even prevent the root account from voluntarily transferring NOVA?
+			ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransferNOVA); // This line has been added by Fragnova
+
 			ensure_root(origin)?;
 			let source = T::Lookup::lookup(source)?;
 			let dest = T::Lookup::lookup(dest)?;
@@ -383,6 +392,8 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			#[pallet::compact] value: T::Balance,
 		) -> DispatchResultWithPostInfo {
+			ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransferNOVA); // This line has been added by Fragnova
+
 			let transactor = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Currency<_>>::transfer(&transactor, &dest, value, KeepAlive)?;
@@ -412,6 +423,8 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 			keep_alive: bool,
 		) -> DispatchResult {
+			ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransferNOVA); // This line has been added by Fragnova
+
 			use fungible::Inspect;
 			let transactor = ensure_signed(origin)?;
 			let reducible_balance = Self::reducible_balance(&transactor, keep_alive);
@@ -487,8 +500,10 @@ pub mod pallet {
 		DeadAccount,
 		/// Number of named reserves exceed MaxReserves
 		TooManyReserves,
-		/// Whether transfer function is allowed or not
-		CannotTransfer,
+		/// No account can voluntarily transfer any of its balance to another account
+		///
+		/// Note: This error has been added by Fragnova
+		CannotTransferNOVA,
 	}
 
 	/// The total units issued in the system.
@@ -1056,71 +1071,6 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		});
 		Ok(actual)
 	}
-
-	pub fn do_transfer(
-		transactor: &T::AccountId,
-		dest: &T::AccountId,
-		value: T::Balance,
-		existence_requirement: ExistenceRequirement,
-	) -> Result<T::Balance, DispatchError>  {
-		if value.is_zero() || transactor == dest {
-			return Ok(value)
-		}
-
-		Self::try_mutate_account_with_dust(
-			dest,
-			|to_account, _| -> Result<DustCleaner<T, I>, DispatchError> {
-				Self::try_mutate_account_with_dust(
-					transactor,
-					|from_account, _| -> DispatchResult {
-						from_account.free = from_account
-							.free
-							.checked_sub(&value)
-							.ok_or(Error::<T, I>::InsufficientBalance)?;
-
-						// NOTE: total stake being stored in the same type means that this could
-						// never overflow but better to be safe than sorry.
-						to_account.free =
-							to_account.free.checked_add(&value).ok_or(ArithmeticError::Overflow)?;
-
-						let ed = T::ExistentialDeposit::get();
-						ensure!(to_account.total() >= ed, Error::<T, I>::ExistentialDeposit);
-
-						Self::ensure_can_withdraw(
-							transactor,
-							value,
-							WithdrawReasons::TRANSFER,
-							from_account.free,
-						)
-						.map_err(|_| Error::<T, I>::LiquidityRestrictions)?;
-
-						// TODO: This is over-conservative. There may now be other providers, and
-						// this pallet may not even be a provider.
-						let allow_death = existence_requirement == ExistenceRequirement::AllowDeath;
-						let allow_death =
-							allow_death && system::Pallet::<T>::can_dec_provider(transactor);
-						ensure!(
-							allow_death || from_account.total() >= ed,
-							Error::<T, I>::KeepAlive
-						);
-
-						Ok(())
-					},
-				)
-				.map(|(_, maybe_dust_cleaner)| maybe_dust_cleaner)
-			},
-		)?;
-
-		// Emit transfer event.
-		Self::deposit_event(Event::Transfer {
-			from: transactor.clone(),
-			to: dest.clone(),
-			amount: value,
-		});
-
-		Ok(value)
-	}
-
 }
 
 impl<T: Config<I>, I: 'static> fungible::Inspect<T::AccountId> for Pallet<T, I> {
@@ -1204,9 +1154,8 @@ impl<T: Config<I>, I: 'static> fungible::Transfer<T::AccountId> for Pallet<T, I>
 		amount: T::Balance,
 		keep_alive: bool,
 	) -> Result<T::Balance, DispatchError> {
-		ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransfer);
-		let existence_requirement = if keep_alive { KeepAlive } else { AllowDeath };
-		Self::do_transfer(source, dest, amount, existence_requirement).map(|_| amount)
+		let er = if keep_alive { KeepAlive } else { AllowDeath };
+		<Self as Currency<T::AccountId>>::transfer(source, dest, amount, er).map(|_| amount)
 	}
 }
 
@@ -1542,16 +1491,68 @@ where
 	}
 
 	// Transfer some free balance from `transactor` to `dest`, respecting existence requirements.
-	// Is a no-op if value to be transferred is zero or the `transactor` is the same as `dest` or the
-	// transferability set in config is forbidden.
+	// Is a no-op if value to be transferred is zero or the `transactor` is the same as `dest`.
 	fn transfer(
 		transactor: &T::AccountId,
 		dest: &T::AccountId,
 		value: Self::Balance,
 		existence_requirement: ExistenceRequirement,
 	) -> DispatchResult {
-		ensure!(T::IsTransferable::get(), Error::<T, I>::CannotTransfer);
-		Self::do_transfer(transactor, dest, value, existence_requirement)?;
+		if value.is_zero() || transactor == dest {
+			return Ok(())
+		}
+
+		Self::try_mutate_account_with_dust(
+			dest,
+			|to_account, _| -> Result<DustCleaner<T, I>, DispatchError> {
+				Self::try_mutate_account_with_dust(
+					transactor,
+					|from_account, _| -> DispatchResult {
+						from_account.free = from_account
+							.free
+							.checked_sub(&value)
+							.ok_or(Error::<T, I>::InsufficientBalance)?;
+
+						// NOTE: total stake being stored in the same type means that this could
+						// never overflow but better to be safe than sorry.
+						to_account.free =
+							to_account.free.checked_add(&value).ok_or(ArithmeticError::Overflow)?;
+
+						let ed = T::ExistentialDeposit::get();
+						ensure!(to_account.total() >= ed, Error::<T, I>::ExistentialDeposit);
+
+						Self::ensure_can_withdraw(
+							transactor,
+							value,
+							WithdrawReasons::TRANSFER,
+							from_account.free,
+						)
+						.map_err(|_| Error::<T, I>::LiquidityRestrictions)?;
+
+						// TODO: This is over-conservative. There may now be other providers, and
+						// this pallet may not even be a provider.
+						let allow_death = existence_requirement == ExistenceRequirement::AllowDeath;
+						let allow_death =
+							allow_death && system::Pallet::<T>::can_dec_provider(transactor);
+						ensure!(
+							allow_death || from_account.total() >= ed,
+							Error::<T, I>::KeepAlive
+						);
+
+						Ok(())
+					},
+				)
+				.map(|(_, maybe_dust_cleaner)| maybe_dust_cleaner)
+			},
+		)?;
+
+		// Emit transfer event.
+		Self::deposit_event(Event::Transfer {
+			from: transactor.clone(),
+			to: dest.clone(),
+			amount: value,
+		});
+
 		Ok(())
 	}
 

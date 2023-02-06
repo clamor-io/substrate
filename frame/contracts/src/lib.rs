@@ -376,6 +376,12 @@ pub mod pallet {
 
 		/// The maximum allowable length in bytes for storage keys.
 		type MaxStorageKeyLen: Get<u32>;
+
+		/// Whether an account can voluntarily transfer any of its balance to another account
+		///
+		/// Note: This type has been added by Fragnova
+		#[pallet::constant]
+		type IsTransferable: Get<bool>;
 	}
 
 	#[pallet::hooks]
@@ -441,6 +447,8 @@ pub mod pallet {
 			storage_deposit_limit: Option<<BalanceOf<T> as codec::HasCompact>::Type>,
 			data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
+			ensure!(T::IsTransferable::get() || (!T::IsTransferable::get() && value == <BalanceOf::<T> as sp_runtime::traits::Zero>::zero()), Error::<T>::CannotTransferNOVA); // This line has been added by Fragnova
+
 			let origin = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
 			let mut output = Self::internal_call(
@@ -499,6 +507,8 @@ pub mod pallet {
 			data: Vec<u8>,
 			salt: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
+			ensure!(T::IsTransferable::get() || (!T::IsTransferable::get() && value == <BalanceOf::<T> as sp_runtime::traits::Zero>::zero()), Error::<T>::CannotTransferNOVA); // This line has been added by Fragnova
+
 			let origin = ensure_signed(origin)?;
 			let code_len = code.len() as u32;
 			let salt_len = salt.len() as u32;
@@ -540,6 +550,8 @@ pub mod pallet {
 			data: Vec<u8>,
 			salt: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
+			ensure!(T::IsTransferable::get() || (!T::IsTransferable::get() && value == <BalanceOf::<T> as sp_runtime::traits::Zero>::zero()), Error::<T>::CannotTransferNOVA); // This line has been added by Fragnova
+
 			let origin = ensure_signed(origin)?;
 			let salt_len = salt.len() as u32;
 			let mut output = Self::internal_instantiate(
@@ -763,6 +775,10 @@ pub mod pallet {
 		/// A more detailed error can be found on the node console if debug messages are enabled
 		/// or in the debug buffer which is returned to RPC clients.
 		CodeRejected,
+		/// No account can voluntarily transfer any of its balance to another account
+		///
+		/// Note: This error has been added by Fragnova
+		CannotTransferNOVA,
 	}
 
 	/// A mapping from an original code hash to the original code, untouched by instrumentation.

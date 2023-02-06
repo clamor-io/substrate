@@ -57,6 +57,8 @@ pub struct AssetDetails<Balance, AccountId, DepositBalance> {
 	/// Whether the asset is frozen for non-admin transfers.
 	pub(super) is_frozen: bool,
 	/// Whether the asset is transferable or not
+	///
+	/// Note: This struct field has been added by Fragnova
 	pub(super) is_transferable: bool,
 }
 

@@ -304,6 +304,7 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
+	type IsTransferable = frame_support::traits::ConstBool<true>; // This line was added by Fragnova
 }
 
 impl pallet_timestamp::Config for Test {
@@ -377,6 +378,7 @@ impl Config for Test {
 	type MaxCodeLen = ConstU32<{ 128 * 1024 }>;
 	type RelaxedMaxCodeLen = ConstU32<{ 256 * 1024 }>;
 	type MaxStorageKeyLen = ConstU32<128>;
+	type IsTransferable = frame_support::traits::ConstBool<true>; // This line was added by Fragnova
 }
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
