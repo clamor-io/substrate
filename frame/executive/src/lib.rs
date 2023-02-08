@@ -1032,11 +1032,7 @@ mod tests {
 		block_import_works_inner(
 			new_test_ext(1),
 			array_bytes::hex_n_into_unchecked(
-<<<<<<< HEAD
-				"75e7d8f360d375bbe91bcf8019c01ab6362448b4a89e3b329717eb9d910340e5",
-=======
 				"4738b4c0aab02d6ddfa62a2a6831ccc975a9f978f7db8d7ea8e68eba8639530a",
->>>>>>> upstream/polkadot-v0.9.37
 			),
 		);
 	}
