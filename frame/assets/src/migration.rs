@@ -56,6 +56,7 @@ pub mod v1 {
 				sufficients: self.sufficients,
 				approvals: self.approvals,
 				status,
+				is_transferable,
 			}
 		}
 	}
