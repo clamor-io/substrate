@@ -584,7 +584,7 @@ pub mod pallet {
 		/// - `min_balance`: The minimum balance of this new asset that any single account must
 		/// have. If an account's balance is reduced below this, then it collapses to zero.
 		/// - `transferable`: Whether the new asset is transferable or not.
-		/// 
+		///
 		/// Emits `Created` event when successful.
 		///
 		/// Weight: `O(1)`
@@ -652,7 +652,7 @@ pub mod pallet {
 		/// - `min_balance`: The minimum balance of this new asset that any single account must
 		/// have. If an account's balance is reduced below this, then it collapses to zero.
 		///- `transferable`: Whether the asset is transferable or not.
-		/// 
+		///
 		/// Emits `ForceCreated` event when successful.
 		///
 		/// Weight: `O(1)`
@@ -925,6 +925,9 @@ pub mod pallet {
 			let source = T::Lookup::lookup(source)?;
 			let dest = T::Lookup::lookup(dest)?;
 			let id: T::AssetId = id.into();
+
+			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
+			ensure!(info.is_transferable, Error::<T, I>::CannotTransfer);
 
 			let f = TransferFlags { keep_alive: false, best_effort: false, burn_dust: false };
 			Self::do_transfer(id, &source, &dest, amount, Some(origin), f).map(|_| ())
@@ -1374,6 +1377,10 @@ pub mod pallet {
 			let owner = ensure_signed(origin)?;
 			let delegate = T::Lookup::lookup(delegate)?;
 			let id: T::AssetId = id.into();
+
+			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
+			ensure!(info.is_transferable, Error::<T, I>::CannotTransfer);
+
 			Self::do_approve_transfer(id, &owner, &delegate, amount)
 		}
 
@@ -1490,6 +1497,10 @@ pub mod pallet {
 			let owner = T::Lookup::lookup(owner)?;
 			let destination = T::Lookup::lookup(destination)?;
 			let id: T::AssetId = id.into();
+
+			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
+			ensure!(info.is_transferable, Error::<T, I>::CannotTransfer);
+
 			Self::do_transfer_approved(id, &owner, &delegate, &destination, amount)
 		}
 
