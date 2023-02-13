@@ -398,7 +398,7 @@ pub mod pallet {
 						sufficients: 0,
 						approvals: 0,
 						status: AssetStatus::Live,
-						is_transferable: *transferable,
+						is_transferable: *transferable, // This line has been added by Fragnova
 					},
 				);
 			}
@@ -563,7 +563,9 @@ pub mod pallet {
 		/// The asset should be frozen before the given operation.
 		NotFrozen,
 		/// Cannot transfer an asset that is not transferable.
-		CannotTransfer,
+		///
+		/// Note: This error has been added by Fragnova
+		CannotTransferThisFragnovaAsset,
 	}
 
 	#[pallet::call]
@@ -583,7 +585,7 @@ pub mod pallet {
 		/// member of the asset class's admin team.
 		/// - `min_balance`: The minimum balance of this new asset that any single account must
 		/// have. If an account's balance is reduced below this, then it collapses to zero.
-		/// - `transferable`: Whether the new asset is transferable or not.
+		/// - `transferable`: Whether the new asset is transferable or not. Note: This parameter has been added by Fragnova.
 		///
 		/// Emits `Created` event when successful.
 		///
@@ -595,7 +597,7 @@ pub mod pallet {
 			id: T::AssetIdParameter,
 			admin: AccountIdLookupOf<T>,
 			min_balance: T::Balance,
-			transferable: bool,
+			transferable: bool, // Note: This parameter has been added by Fragnova
 		) -> DispatchResult {
 			let id: T::AssetId = id.into();
 			let owner = T::CreateOrigin::ensure_origin(origin, &id)?;
@@ -622,7 +624,7 @@ pub mod pallet {
 					sufficients: 0,
 					approvals: 0,
 					status: AssetStatus::Live,
-					is_transferable: transferable,
+					is_transferable: transferable, // This line has been added by Fragnova
 				},
 			);
 
@@ -651,7 +653,7 @@ pub mod pallet {
 		/// `transfer_ownership` and `set_team`.
 		/// - `min_balance`: The minimum balance of this new asset that any single account must
 		/// have. If an account's balance is reduced below this, then it collapses to zero.
-		///- `transferable`: Whether the asset is transferable or not.
+		///- `transferable`: Whether the asset is transferable or not. Note: This parameter has been added by Fragnova.
 		///
 		/// Emits `ForceCreated` event when successful.
 		///
@@ -664,7 +666,7 @@ pub mod pallet {
 			owner: AccountIdLookupOf<T>,
 			is_sufficient: bool,
 			#[pallet::compact] min_balance: T::Balance,
-			transferable: bool,
+			transferable: bool, // Note: This parameter has been added by Fragnova.
 		) -> DispatchResult {
 			T::ForceOrigin::ensure_origin(origin)?;
 			let owner = T::Lookup::lookup(owner)?;
@@ -849,8 +851,9 @@ pub mod pallet {
 			let dest = T::Lookup::lookup(target)?;
 			let id: T::AssetId = id.into();
 
+			// These 2 lines have been added by Fragnova
 			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-			ensure!(info.is_transferable, Error::<T, I>::CannotTransfer);
+			ensure!(info.is_transferable, Error::<T, I>::CannotTransferThisFragnovaAsset);
 
 			let f = TransferFlags { keep_alive: false, best_effort: false, burn_dust: false };
 			Self::do_transfer(id, &origin, &dest, amount, None, f).map(|_| ())
@@ -886,8 +889,9 @@ pub mod pallet {
 			let dest = T::Lookup::lookup(target)?;
 			let id: T::AssetId = id.into();
 
+			// These 2 lines have been added by Fragnova
 			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-			ensure!(info.is_transferable, Error::<T, I>::CannotTransfer);
+			ensure!(info.is_transferable, Error::<T, I>::CannotTransferThisFragnovaAsset);
 
 			let f = TransferFlags { keep_alive: true, best_effort: false, burn_dust: false };
 			Self::do_transfer(id, &source, &dest, amount, None, f).map(|_| ())
@@ -926,8 +930,9 @@ pub mod pallet {
 			let dest = T::Lookup::lookup(dest)?;
 			let id: T::AssetId = id.into();
 
+			// These 2 lines have been added by Fragnova
 			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-			ensure!(info.is_transferable, Error::<T, I>::CannotTransfer);
+			ensure!(info.is_transferable, Error::<T, I>::CannotTransferThisFragnovaAsset);
 
 			let f = TransferFlags { keep_alive: false, best_effort: false, burn_dust: false };
 			Self::do_transfer(id, &source, &dest, amount, Some(origin), f).map(|_| ())
@@ -1378,8 +1383,9 @@ pub mod pallet {
 			let delegate = T::Lookup::lookup(delegate)?;
 			let id: T::AssetId = id.into();
 
+			// These 2 lines have been added by Fragnova
 			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-			ensure!(info.is_transferable, Error::<T, I>::CannotTransfer);
+			ensure!(info.is_transferable, Error::<T, I>::CannotTransferThisFragnovaAsset);
 
 			Self::do_approve_transfer(id, &owner, &delegate, amount)
 		}
@@ -1498,8 +1504,9 @@ pub mod pallet {
 			let destination = T::Lookup::lookup(destination)?;
 			let id: T::AssetId = id.into();
 
+			// These 2 lines have been added by Fragnova
 			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-			ensure!(info.is_transferable, Error::<T, I>::CannotTransfer);
+			ensure!(info.is_transferable, Error::<T, I>::CannotTransferThisFragnovaAsset);
 
 			Self::do_transfer_approved(id, &owner, &delegate, &destination, amount)
 		}

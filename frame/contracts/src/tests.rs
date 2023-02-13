@@ -322,6 +322,7 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
+	type IsTransferable = frame_support::traits::ConstBool<true>; // This line was added by Fragnova
 }
 
 impl pallet_timestamp::Config for Test {
@@ -407,6 +408,7 @@ impl Config for Test {
 	type AddressGenerator = DefaultAddressGenerator;
 	type MaxCodeLen = ConstU32<{ 128 * 1024 }>;
 	type MaxStorageKeyLen = ConstU32<128>;
+	type IsTransferable = frame_support::traits::ConstBool<true>; // This line was added by Fragnova
 	type UnsafeUnstableInterface = UnstableInterface;
 	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
 }
