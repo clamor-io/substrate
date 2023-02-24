@@ -930,10 +930,6 @@ pub mod pallet {
 			let dest = T::Lookup::lookup(dest)?;
 			let id: T::AssetId = id.into();
 
-			// These 2 lines have been added by Fragnova
-			let info = Asset::<T, I>::get(id).ok_or(Error::<T, I>::Unknown)?;
-			ensure!(info.is_transferable, Error::<T, I>::CannotTransferThisFragnovaAsset);
-
 			let f = TransferFlags { keep_alive: false, best_effort: false, burn_dust: false };
 			Self::do_transfer(id, &source, &dest, amount, Some(origin), f).map(|_| ())
 		}

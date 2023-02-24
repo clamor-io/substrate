@@ -1256,7 +1256,6 @@ fn untransferable_asset_test_admin() {
 		let amount = u64::pow(2, 63) + 2;
 		assert_ok!(Assets::force_create(RuntimeOrigin::root(), 0, 1, true, 1, false));
 		assert_ok!(Assets::mint(RuntimeOrigin::signed(1), 0, 1, amount));
-		let e = Error::<Test>::CannotTransferThisFragnovaAsset;
-		assert_noop!(Assets::force_transfer(RuntimeOrigin::signed(1), 0, 1, 2, amount - 1), e);
+		assert_ok!(Assets::force_transfer(RuntimeOrigin::signed(1), 0, 1, 2, amount - 1));
 	})
 }
