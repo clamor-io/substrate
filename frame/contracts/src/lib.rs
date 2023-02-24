@@ -330,13 +330,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxStorageKeyLen: Get<u32>;
 
-		
-		/// Whether an account can voluntarily transfer any of its balance to another account
-		///
-		/// Note: This type has been added by Fragnova
-		#[pallet::constant]
-		type IsTransferable: Get<bool>;
-
 		/// Make contract callable functions marked as `#[unstable]` available.
 		///
 		/// Contracts that use `#[unstable]` functions won't be able to be uploaded unless
@@ -352,6 +345,12 @@ pub mod pallet {
 		/// The maximum length of the debug buffer in bytes.
 		#[pallet::constant]
 		type MaxDebugBufferLen: Get<u32>;
+
+		/// Whether an account can voluntarily transfer any of its balance to another account
+		///
+		/// Note: This type has been added by Fragnova
+		#[pallet::constant]
+		type IsTransferable: Get<bool>;
 	}
 
 	#[pallet::hooks]
@@ -582,7 +581,7 @@ pub mod pallet {
 			data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			ensure!(T::IsTransferable::get() || (!T::IsTransferable::get() && value == <BalanceOf::<T> as sp_runtime::traits::Zero>::zero()), Error::<T>::CannotTransferNOVA); // This line has been added by Fragnova
-			
+
 			let gas_limit: Weight = gas_limit.into();
 			let origin = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
