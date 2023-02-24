@@ -149,7 +149,7 @@ benchmarks_instance_pallet! {
 		let asset_id = default_asset_id::<T, I>();
 		let caller: T::AccountId = whitelisted_caller();
 		let caller_lookup = T::Lookup::unlookup(caller.clone());
-	}: _(SystemOrigin::Root, asset_id, caller_lookup, true, 1u32.into())
+	}: _(SystemOrigin::Root, asset_id, caller_lookup, true, 1u32.into(), true)
 	verify {
 		assert_last_event::<T, I>(Event::ForceCreated { asset_id: asset_id.into(), owner: caller }.into());
 	}
