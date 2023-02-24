@@ -345,6 +345,12 @@ pub mod pallet {
 		/// The maximum length of the debug buffer in bytes.
 		#[pallet::constant]
 		type MaxDebugBufferLen: Get<u32>;
+
+		/// Whether an account can voluntarily transfer any of its balance to another account
+		///
+		/// Note: This type has been added by Fragnova
+		#[pallet::constant]
+		type IsTransferable: Get<bool>;
 	}
 
 	#[pallet::hooks]
@@ -574,6 +580,8 @@ pub mod pallet {
 			storage_deposit_limit: Option<<BalanceOf<T> as codec::HasCompact>::Type>,
 			data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
+			ensure!(T::IsTransferable::get() || (!T::IsTransferable::get() && value == <BalanceOf::<T> as sp_runtime::traits::Zero>::zero()), Error::<T>::NoValueAllowed); // This line has been added by Fragnova
+
 			let gas_limit: Weight = gas_limit.into();
 			let origin = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
@@ -860,6 +868,8 @@ pub mod pallet {
 		CodeRejected,
 		/// An indetermistic code was used in a context where this is not permitted.
 		Indeterministic,
+		/// Cannot have values on this chain contracts
+		NoValueAllowed
 	}
 
 	/// A mapping from an original code hash to the original code, untouched by instrumentation.

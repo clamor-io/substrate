@@ -37,7 +37,7 @@ use frame_support::{
 	parameter_types,
 	storage::child,
 	traits::{
-		BalanceStatus, ConstU32, ConstU64, Contains, Currency, Get, LockableCurrency, OnIdle,
+		BalanceStatus, ConstBool, ConstU32, ConstU64, Contains, Currency, Get, LockableCurrency, OnIdle,
 		OnInitialize, ReservableCurrency, WithdrawReasons,
 	},
 	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
@@ -322,6 +322,7 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
+	type IsTransferable = ConstBool<true>;
 }
 
 impl pallet_timestamp::Config for Test {
@@ -409,6 +410,7 @@ impl Config for Test {
 	type MaxStorageKeyLen = ConstU32<128>;
 	type UnsafeUnstableInterface = UnstableInterface;
 	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
+	type IsTransferable = ConstBool<true>;
 }
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
