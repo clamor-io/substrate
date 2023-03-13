@@ -19,7 +19,7 @@ use self::test_utils::hash;
 use crate::{
 	chain_extension::{
 		ChainExtension, Environment, Ext, InitState, RegisteredChainExtension,
-		Result as ExtensionResult, RetVal, ReturnFlags, SysConfig,
+		Result as ExtensionResult, RetVal, ReturnFlags,
 	},
 	exec::{FixSizedKey, Frame},
 	storage::Storage,
@@ -43,6 +43,7 @@ use frame_support::{
 	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
 };
 use frame_system::{self as system, EventRecord, Phase};
+use frame_system::Config as SysConfig;
 use pretty_assertions::{assert_eq, assert_ne};
 use sp_io::hashing::blake2_256;
 use sp_keystore::{testing::KeyStore, KeystoreExt};
