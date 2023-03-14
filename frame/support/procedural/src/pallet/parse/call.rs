@@ -63,6 +63,8 @@ pub struct CallVariantDef {
 	pub explicit_call_index: bool,
 	/// Docs, used for metadata.
 	pub docs: Vec<syn::Lit>,
+	/// Attributes annotated at the top of the dispatchable function.
+	pub attrs: Vec<syn::Attribute>,
 }
 
 /// Attributes for functions in call impl block.
@@ -304,6 +306,7 @@ impl CallDef {
 					explicit_call_index,
 					args,
 					docs,
+					attrs: method.attrs.clone(),
 				});
 			} else {
 				let msg = "Invalid pallet::call, only method accepted";

@@ -114,7 +114,7 @@ use frame_support::{
 		ChangeMembers, Currency, Get, InitializeMembers, IsSubType, OnUnbalanced,
 		ReservableCurrency,
 	},
-	weights::Weight,
+	weights::{OldWeight, Weight},
 };
 use pallet_identity::IdentityField;
 
@@ -555,23 +555,20 @@ pub mod pallet {
 				.max(T::WeightInfo::close_disapproved(m, p2))
 				.saturating_add(p1.into())
 		})]
-		pub fn close(
+		#[allow(deprecated)]
+		#[deprecated(note = "1D weight is used in this extrinsic, please migrate to use `close`")]
+		pub fn close_old_weight(
 			origin: OriginFor<T>,
 			proposal_hash: T::Hash,
 			#[pallet::compact] index: ProposalIndex,
-			#[pallet::compact] proposal_weight_bound: Weight,
+			#[pallet::compact] proposal_weight_bound: OldWeight,
 			#[pallet::compact] length_bound: u32,
 		) -> DispatchResultWithPostInfo {
+			let proposal_weight_bound: Weight = proposal_weight_bound.into();
 			let who = ensure_signed(origin)?;
 			ensure!(Self::has_voting_rights(&who), Error::<T, I>::NoVotingRights);
 
-			let info = T::ProposalProvider::close_proposal(
-				proposal_hash,
-				index,
-				proposal_weight_bound,
-				length_bound,
-			)?;
-			Ok(info.into())
+			Self::do_close(proposal_hash, index, proposal_weight_bound, length_bound)
 		}
 
 		/// Initialize the Alliance, onboard fellows and allies.
@@ -1155,5 +1152,20 @@ impl<T: Config<I>, I: 'static> Pallet<T, I> {
 			}
 		}
 		res
+	}
+
+	fn do_close(
+		proposal_hash: T::Hash,
+		index: ProposalIndex,
+		proposal_weight_bound: Weight,
+		length_bound: u32,
+	) -> DispatchResultWithPostInfo {
+		let info = T::ProposalProvider::close_proposal(
+			proposal_hash,
+			index,
+			proposal_weight_bound,
+			length_bound,
+		)?;
+		Ok(info.into())
 	}
 }
