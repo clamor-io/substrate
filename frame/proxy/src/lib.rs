@@ -772,7 +772,7 @@ impl<T: Config> Pallet<T> {
 		Ok(Proxies::<T>::get(real).0.into_iter().find(f).ok_or(Error::<T>::NotProxy)?)
 	}
 
-	fn do_proxy(
+	pub fn do_proxy(
 		def: ProxyDefinition<T::AccountId, T::ProxyType, T::BlockNumber>,
 		real: T::AccountId,
 		call: <T as Config>::RuntimeCall,

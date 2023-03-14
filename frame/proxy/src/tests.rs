@@ -29,7 +29,7 @@ use frame_support::{
 	traits::{ConstU32, ConstU64, Contains},
 	RuntimeDebug,
 };
-use sp_core::H256;
+use sp_core::{H256, ConstBool};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -88,6 +88,7 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ConstU64<1>;
 	type AccountStore = System;
 	type WeightInfo = ();
+	type IsTransferable = ConstBool<true>;
 }
 impl pallet_utility::Config for Test {
 	type RuntimeEvent = RuntimeEvent;

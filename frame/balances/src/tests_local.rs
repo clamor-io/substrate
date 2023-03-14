@@ -100,6 +100,7 @@ impl Config for Test {
 	type MaxReserves = ConstU32<2>;
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
+	type IsTransferable = frame_support::traits::ConstBool<true>; // This line was added by Fragnova
 }
 
 pub struct ExtBuilder {

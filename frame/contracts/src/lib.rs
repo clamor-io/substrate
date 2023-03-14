@@ -319,6 +319,12 @@ pub mod pallet {
 		/// The maximum length of the debug buffer in bytes.
 		#[pallet::constant]
 		type MaxDebugBufferLen: Get<u32>;
+
+		/// Whether an account can voluntarily transfer any of its balance to another account
+		///
+		/// Note: This type has been added by Fragnova
+		#[pallet::constant]
+		type IsTransferable: Get<bool>;
 	}
 
 	#[pallet::hooks]
@@ -613,6 +619,8 @@ pub mod pallet {
 			storage_deposit_limit: Option<<BalanceOf<T> as codec::HasCompact>::Type>,
 			data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
+			ensure!(T::IsTransferable::get() || (!T::IsTransferable::get() && value == <BalanceOf::<T> as sp_runtime::traits::Zero>::zero()), Error::<T>::CannotTransferNOVA); // This line has been added by Fragnova
+
 			let gas_limit: Weight = gas_limit.into();
 			let origin = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
@@ -674,6 +682,8 @@ pub mod pallet {
 			data: Vec<u8>,
 			salt: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
+			ensure!(T::IsTransferable::get() || (!T::IsTransferable::get() && value == <BalanceOf::<T> as sp_runtime::traits::Zero>::zero()), Error::<T>::CannotTransferNOVA); // This line has been added by Fragnova
+
 			let origin = ensure_signed(origin)?;
 			let code_len = code.len() as u32;
 			let data_len = data.len() as u32;
@@ -717,6 +727,8 @@ pub mod pallet {
 			data: Vec<u8>,
 			salt: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
+			ensure!(T::IsTransferable::get() || (!T::IsTransferable::get() && value == <BalanceOf::<T> as sp_runtime::traits::Zero>::zero()), Error::<T>::CannotTransferNOVA); // This line has been added by Fragnova
+
 			let origin = ensure_signed(origin)?;
 			let data_len = data.len() as u32;
 			let salt_len = salt.len() as u32;
@@ -893,6 +905,10 @@ pub mod pallet {
 		/// A more detailed error can be found on the node console if debug messages are enabled
 		/// by supplying `-lruntime::contracts=debug`.
 		CodeRejected,
+		/// No account can voluntarily transfer any of its balance to another account
+		///
+		/// Note: This error has been added by Fragnova
+		CannotTransferNOVA,
 		/// An indetermistic code was used in a context where this is not permitted.
 		Indeterministic,
 	}

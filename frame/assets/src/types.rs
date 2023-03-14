@@ -69,6 +69,10 @@ pub struct AssetDetails<Balance, AccountId, DepositBalance> {
 	pub(super) approvals: u32,
 	/// The status of the asset
 	pub(super) status: AssetStatus,
+	/// Whether the asset is transferable or not
+	///
+	/// Note: This struct field has been added by Fragnova
+	pub(super) is_transferable: bool,
 }
 
 /// Data concerning an approval.
@@ -102,7 +106,7 @@ pub enum ExistenceReason<Balance> {
 impl<Balance> ExistenceReason<Balance> {
 	pub(crate) fn take_deposit(&mut self) -> Option<Balance> {
 		if !matches!(self, ExistenceReason::DepositHeld(_)) {
-			return None
+			return None;
 		}
 		if let ExistenceReason::DepositHeld(deposit) =
 			sp_std::mem::replace(self, ExistenceReason::DepositRefunded)
@@ -175,7 +179,7 @@ impl<AssetId, AccountId, Balance> FrozenBalance<AssetId, AccountId, Balance> for
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub(super) struct TransferFlags {
+pub struct TransferFlags {
 	/// The debited account must stay alive at the end of the operation; an error is returned if
 	/// this cannot be achieved legally.
 	pub(super) keep_alive: bool,
